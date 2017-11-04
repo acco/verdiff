@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/verdiff'
+require 'pathname'
+require 'fileutils'
+
+# Usage
+#
+#   verdiff [file_path_1,file_path_2,...] [template_directory]
+
+def resolve_path(path)
+  unless Pathname.new(path).absolute?
+    File.join(Dir.pwd, path)
+  else
+    path
+  end
+end
+
+file_paths = ARGV[0] && ARGV[0].split(',')
+template_directory = ARGV[1]
+
+expanded_file_paths = []
+
+file_paths.each do |file_path|
+  if file_path.include?('*')
+    expanded_file_paths.concat Dir[file_path]
+  else
+    expanded_file_paths << file_path
+  end
+end
+
+if expanded_file_paths.size < 2
+  abort "Must supply > 1 file path"
+end
+
+if expanded_file_paths.nil? || template_directory.nil?
+  abort "Error: Expected arguments `file_paths(s)` and `template_directory`"
+end
+
+Verdiff::diff_files \
+  expanded_file_paths.map { |f| resolve_path(f)},
+  resolve_path(template_directory)
